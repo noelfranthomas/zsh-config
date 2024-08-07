@@ -1,0 +1,119 @@
+# ~/.functions
+
+# Function
+# check if a website is up
+checksite() {
+  curl -Is "$1" | head -n 1
+}
+
+# Function
+# find process name and PID by port
+portpid() {
+  if [ -z "$1" ]; then
+    echo "Usage: portpid <port>"
+    return 1
+  fi
+
+  lsof -i :"$1" | awk 'NR>1 {print "Process Name: "$1, "PID: "$2}'
+}
+
+# Function
+# generate a random password
+genpass() {
+  length="${1:-16}"
+  if ! [[ "$length" =~ ^[0-9]+$ ]]; then
+    echo "Invalid length specified. Please provide a numerical value."
+    return 1
+  fi
+  LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c "$length" ; echo ''
+}
+
+# Function
+# remove all stopped containers
+dockerclean() {
+  echo "removing stopped containers"
+  docker rm $(docker ps -a -q)
+}
+
+# Function
+# remove all dangling images
+dockerimageclean() {
+  docker rmi $(docker images -f "dangling=true" -q)
+}
+
+# Function
+# stop and remove all containers
+dockerkillall() {
+  docker kill $(docker ps -q)
+  docker rm $(docker ps -a -q)
+}
+
+# Function
+# list all functions and descriptions defined in ~/.functions
+lsf() {
+    awk '
+    /^# Function/ { desc=""; getline; while ($0 ~ /^# /) { sub(/^# /, "", $0); desc = desc $0 " "; getline; }; func_name=$1; print func_name " - " desc }' ~/.functions
+}
+
+ll() {
+  ls -lah
+}
+
+# Function
+# go up multiple directories
+up() {
+  local d=""
+  local limit="$1"
+  for ((i=1 ; i <= limit ; i++)); do
+    d="../$d"
+  done
+  cd "$d"
+}
+
+# Function
+# go to the GitHub dir
+gogit() {
+  cd ~/Documents/GitHub
+}
+
+# Function
+# git status shortcut
+gs() {
+  git status
+}
+
+# Function
+# git pull shortcut
+gp() {
+  git pull
+}
+
+# Function
+# git add, commit, and push
+gacp() {
+  git add .
+  git commit -m "$1"
+  git push
+}
+
+# Function
+# create venv with python 3.11
+mkvenv() {
+  pkgx python@3.11 -m venv .venv
+}
+
+# Function
+# make directory and switch in
+mkcd() {
+  mkdir -p "$1"
+  cd "$1"
+}
+
+# Function
+# start fsh in an alpine container
+alpined() {
+  docker run -w /root -it --rm alpine:edge sh -uelic '
+    apk add git lazygit neovim ripgrep alpine-sdk curl fish --update
+    curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install | fish
+  '
+}

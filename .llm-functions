@@ -1,0 +1,102 @@
+# ~/.llm-functions
+
+# Function to log the command and its output
+preexec() {
+  LAST_COMMAND=$1
+  # This will append the command to the log file
+  echo "Command: $LAST_COMMAND" >> $HOME/command_output.log
+}
+
+# Function to capture the output of the last command
+capture_output() {
+  # Redirect both stdout and stderr to append to the log, capturing output
+  exec > >(tee -a $HOME/command_output.log) 2>&1
+}
+
+# Function to query the LLM for suggestions
+query_llm() {
+  local input=$1
+  local last_output=$(tail -n 1 $HOME/command_output.log) # Get the last output from the log file
+  
+  # If input or last output is empty, use an empty string
+  [ -z "$input" ] && input="No previous command"
+  [ -z "$last_output" ] && last_output="No output from last command"
+
+  # Build the JSON payload
+  local data=$(cat <<EOF
+{
+  "model": "LLaMA_CPP",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are part of a PS1 in a ZSH shell on MacOS. Suggest the next command based on the previous command and its output. Only return the command and nothing else."
+    },
+    {
+      "role": "user",
+      "content": "$input, and the last output: '$last_output', suggest the next command."
+    }
+  ]
+}
+EOF
+)
+
+  # Execute the API call
+  response=$(curl -s http://localhost:8080/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer no-key" \
+    -d "$data" | python3 -c '
+import json, sys
+try:
+    response = json.load(sys.stdin)
+    if "choices" in response and len(response["choices"]) > 0 and "message" in response["choices"][0] and "content" in response["choices"][0]["message"]:
+        print(response["choices"][0]["message"]["content"][:-10])
+    else:
+        print("No valid response")
+except json.JSONDecodeError:
+    print("NONE")
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
+')
+
+  # Check if the response from the curl command is empty or malformed
+  if [ $? -ne 0 ] || [ -z "$response" ]; then
+    echo "Failed to obtain a valid response."
+  else
+    echo $response
+  fi
+}
+
+# Function to get a command suggestion from the LLM
+parse_llm_response() {
+  local previous_command=$LAST_COMMAND
+  local input="Based on the previous command: '$previous_command'"
+  local suggestion=$(query_llm "$input")
+  SUGGESTED_COMMAND="$suggestion"
+  export SUGGESTED_COMMAND
+}
+
+# Update PS1 dynamically before each prompt
+precmd() {
+  parse_llm_response
+  PS1="../$(get_last_two_dirs) %F{green}$(parse_git_branch) %F{blue}$SUGGESTED_COMMAND %F{green}>%f "
+}
+
+# Function to execute the suggested command
+execute_suggested_command() {
+  if [ -n "$SUGGESTED_COMMAND" ]; then
+    echo "Executing suggested command: $SUGGESTED_COMMAND" >&2
+    eval "$SUGGESTED_COMMAND"
+    unset SUGGESTED_COMMAND
+  else
+    echo "No suggested command to execute." >&2
+  fi
+}
+
+# Register the widget
+zle -N execute_suggested_command
+
+# Bind a key to execute the suggested command
+bindkey '^o' execute_suggested_command
+
+# Initialize capturing output immediately after startup
+capture_output
