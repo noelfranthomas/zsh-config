@@ -14,6 +14,8 @@ Allows for command completion, if an LLM is turned on.
 
 3. Start a new terminal, or run `source <path>/.zshrc` (typically `source ~/.zshrc`) on a running terminal.
 
+4. To enable LLM features, run a llamafile server. See [llamafile](https://github.com/Mozilla-Ocho/llamafile) for more information.
+
 # Features
 
 Click below to see the features video.
