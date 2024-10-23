@@ -17,7 +17,7 @@ capture_output() {
 query_llm() {
   local input=$1
   local last_output=$(tail -n 1 $HOME/command_output.log) # Get the last output from the log file
-  
+
   # If input or last output is empty, use an empty string
   [ -z "$input" ] && input="No previous command"
   [ -z "$last_output" ] && last_output="No output from last command"

@@ -1,5 +1,7 @@
 # ~/.functions
 
+export GP=~/Documents/GitHub
+
 # Function
 # check if a website is up
 checksite() {
@@ -29,32 +31,14 @@ genpass() {
 }
 
 # Function
-# remove all stopped containers
-dockerclean() {
-  echo "removing stopped containers"
-  docker rm $(docker ps -a -q)
-}
-
-# Function
-# remove all dangling images
-dockerimageclean() {
-  docker rmi $(docker images -f "dangling=true" -q)
-}
-
-# Function
-# stop and remove all containers
-dockerkillall() {
-  docker kill $(docker ps -q)
-  docker rm $(docker ps -a -q)
-}
-
-# Function
 # list all functions and descriptions defined in ~/.functions
 lsf() {
     awk '
     /^# Function/ { desc=""; getline; while ($0 ~ /^# /) { sub(/^# /, "", $0); desc = desc $0 " "; getline; }; func_name=$1; print func_name " - " desc }' ~/.functions
 }
 
+# Function
+# ls -lah
 ll() {
   ls -lah
 }
@@ -72,8 +56,14 @@ up() {
 
 # Function
 # go to the GitHub dir
-gogit() {
-  cd ~/Documents/GitHub
+jkl() {
+  cd $GP
+}
+
+# Function
+# git add shortcut
+ga() {
+  git add .
 }
 
 # Function
@@ -89,17 +79,20 @@ gp() {
 }
 
 # Function
+# fetch all remote branches and create corresponding local branches
+gb() {
+  git fetch --all
+  for branch in $(git branch -r | grep -v '\->'); do
+    git branch --track "${branch##*/}" "$branch" 2>/dev/null || true
+  done
+}
+
+# Function
 # git add, commit, and push
 gacp() {
   git add .
   git commit -m "$1"
   git push
-}
-
-# Function
-# create venv with python 3.11
-mkvenv() {
-  pkgx python@3.11 -m venv .venv
 }
 
 # Function
@@ -116,4 +109,28 @@ alpined() {
     apk add git lazygit neovim ripgrep alpine-sdk curl fish --update
     curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install | fish
   '
+}
+
+# Function
+# activate or create a virtual environment
+venv() {
+    BLUE="\033[1;34m"
+    GREEN="\033[1;32m"
+    RESET="\033[0m"
+
+    if [[ -d ".venv" ]]; then
+        echo -e "${BLUE}Activating virtual environment...${RESET}"
+        source .venv/bin/activate
+    else
+        echo "No virtual environment found."
+        read -q "REPLY?Would you like to create one? (y/n) "
+        echo  # move to a new line after read -q
+        if [[ "$REPLY" == "y" ]]; then
+            echo "Creating virtual environment..."
+            pkgx python@3.11 -m venv .venv
+            echo -e "${GREEN}Virtual environment created.${RESET}"
+            echo -e "${BLUE}Activating virtual environment...${RESET}"
+            source .venv/bin/activate
+        fi
+    fi
 }

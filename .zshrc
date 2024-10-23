@@ -1,14 +1,14 @@
 # ~/.zshrc
 
 export CLICOLOR=1
-export EDITOR='nvim'
+export EDITOR='vim'
 
 # change to a directory just by typing its name
 setopt autocd
 # spellcheck
 setopt correct
 
-echo "nft config"
+echo "nft config (v1.3)"
 echo "- use lsf to see available functions"
 echo "- autocd enabled"
 echo "- spellcheck enabled"
@@ -68,6 +68,3 @@ else
 fi
 
 source <(pkgx --shellcode)  #docs.pkgx.sh/shellcode
-export PATH="/opt/homebrew/opt/protobuf@3/bin:$PATH"
-export PATH="/opt/homebrew/opt/protobuf@3/bin:$PATH"
-export PATH="/opt/homebrew/opt/protobuf@3/bin:$PATH"
