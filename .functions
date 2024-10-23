@@ -1,13 +1,13 @@
 # ~/.functions
 
-export GP=~/Documents/GitHub
+export SPECIAL_GP=~/Documents/GitHub
 
 # Function
-# updates .zshrc, .functions, and .llm-functions. Please read function file for proper usage.
+# updates .zshrc, .functions, and .llm-functions. Please read .functions file for proper usage.
 update-zsh() {
-  cp -f $GP/zsh-config/.zshrc $HOME
-  cp -f $GP/zsh-config/.functions $HOME
-  cp -f $GP/zsh-config/.llm-functions $HOME
+  cp -f $SPECIAL_GP/zsh-config/.zshrc $HOME
+  cp -f $SPECIAL_GP/zsh-config/.functions $HOME
+  cp -f $SPECIAL_GP/zsh-config/.llm-functions $HOME
 }
 
 # Function
@@ -65,7 +65,7 @@ up() {
 # Function
 # go to the GitHub dir
 jkl() {
-  cd $GP
+  cd $SPECIAL_GP
 }
 
 # Function
