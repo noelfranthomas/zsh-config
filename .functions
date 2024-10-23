@@ -3,6 +3,14 @@
 export GP=~/Documents/GitHub
 
 # Function
+# updates .zshrc, .functions, and .llm-functions. Please read function file for proper usage.
+update-zsh() {
+  cp -f $GP/zsh-config/.zshrc $HOME
+  cp -f $GP/zsh-config/.functions $HOME
+  cp -f $GP/zsh-config/.llm-functions $HOME
+}
+
+# Function
 # check if a website is up
 checksite() {
   curl -Is "$1" | head -n 1

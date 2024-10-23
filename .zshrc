@@ -8,7 +8,7 @@ setopt autocd
 # spellcheck
 setopt correct
 
-echo "nft config (v1.3)"
+echo "nft config (v1.38)"
 echo "- use lsf to see available functions"
 echo "- autocd enabled"
 echo "- spellcheck enabled"
