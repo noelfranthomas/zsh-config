@@ -156,7 +156,7 @@ ubuntud() {
     docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /app -it --rm -v "$1":/app ubuntu:noble sh -c '
       echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
       apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
-      add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
+      add-apt-repository -y ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
       curl -fsSL https://pkgx.sh | sh
       eval "$(pkgx integrate)"
       bash
@@ -165,7 +165,7 @@ ubuntud() {
     docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /root -it --rm ubuntu:noble sh -c '
       echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
       apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
-      add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
+      add-apt-repository -y ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
       curl -fsSL https://pkgx.sh | sh
       eval "$(pkgx integrate)"
       bash
