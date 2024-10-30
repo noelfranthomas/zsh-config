@@ -40,9 +40,48 @@ genpass() {
 
 # Function
 # list all functions and descriptions defined in ~/.functions
-lsf() {
+help() {
+    echo
+    echo "This is a zsh config designed to reduce friction during everyday use."
+    echo "Author: @noelfranthomas"
+    echo
+
+    echo "PARAMS: "
+
+    if [[ $(setopt) == *autocd* ]]; then
+        echo "\tautocd: \e[32menabled\e[0m"
+    else
+        echo "\tautocd: \e[31mdisabled\e[0m"
+    fi
+
+    if [[ $(setopt) == *correct* ]]; then
+        echo "\tspellcheck: \e[32menabled\e[0m"
+    else
+        echo "\tspellcheck: \e[31mdisabled\e[0m"
+    fi
+
+    if [[ $CLICOLOR == 1 ]]; then
+        echo "\tCLICOLOR: \e[32menabled\e[0m"
+    else
+        echo "\tCLICOLOR: \e[31mdisabled\e[0m"
+    fi
+
+    echo "\tEDITOR: \e[32m$EDITOR\e[0m"
+
+    if [[ $LLM_AVAILABLE == 1 ]]; then
+        echo "\tLLM_AVAILABLE: \e[32menabled\e[0m"
+    else
+        echo "\tLLM_AVAILABLE: $LLM_AVAILABLE"
+    fi
+
+    echo
+    echo "Here is a list of functions that have been added to the config:"
+    echo
+
     awk '
-    /^# Function/ { desc=""; getline; while ($0 ~ /^# /) { sub(/^# /, "", $0); desc = desc $0 " "; getline; }; func_name=$1; print func_name " - " desc }' ~/.functions
+    /^# Function/ { desc=""; getline; while ($0 ~ /^# /) { sub(/^# /, "", $0); desc = desc $0 " "; getline; }; func_name=$1; printf "%-16s - %s\n", func_name, desc}' ~/.functions
+
+    echo
 }
 
 # Function
@@ -111,12 +150,27 @@ mkcd() {
 }
 
 # Function
-# start fsh in an alpine container
-alpined() {
-  docker run -w /root -it --rm alpine:edge sh -uelic '
-    apk add git lazygit neovim ripgrep alpine-sdk curl fish --update
-    curl https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install | fish
-  '
+# start an ubuntu container in interactive mode
+ubuntud() {
+  if [ -n "$1" ]; then
+    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /app -it --rm -v "$1":/app ubuntu:noble sh -c '
+      echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
+      apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+      add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
+      curl -fsSL https://pkgx.sh | sh
+      eval "$(pkgx integrate)"
+      bash
+    '
+  else
+    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /root -it --rm ubuntu:noble sh -c '
+      echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
+      apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+      add-apt-repository ppa:deadsnakes/ppa && apt update && apt install -y python3.11 python3.11-venv
+      curl -fsSL https://pkgx.sh | sh
+      eval "$(pkgx integrate)"
+      bash
+    '
+  fi
 }
 
 # Function
