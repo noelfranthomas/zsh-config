@@ -1,13 +1,20 @@
 # ~/.functions
 
 export SPECIAL_GP=~/Documents/GitHub
+export SPECIAL_ZSH_CONFIG_PATH=~/Documents/GitHub/zsh-config
 
 # Function
 # updates .zshrc, .functions, and .llm-functions. Please read .functions file for proper usage.
-update-zsh() {
+uzsh() {
   cp -f $SPECIAL_GP/zsh-config/.zshrc $HOME
   cp -f $SPECIAL_GP/zsh-config/.functions $HOME
   cp -f $SPECIAL_GP/zsh-config/.llm-functions $HOME
+}
+
+# Function
+# open the zsh-config files in the default editor.
+wzsh() {
+  "$EDITOR" $SPECIAL_ZSH_CONFIG_PATH
 }
 
 # Function
@@ -39,47 +46,90 @@ genpass() {
 }
 
 # Function
-# list all functions and descriptions defined in ~/.functions
+# list all functions and descriptions, and optional definition
 help() {
-    echo
-    echo "This is a zsh config designed to reduce friction during everyday use."
-    echo "Author: @noelfranthomas"
-    echo
+    if [[ -z "$1" ]]; then
+        # Show the intro information if no argument is provided
+        echo
+        echo "This is a zsh config designed to reduce friction during everyday use."
+        echo "Author: @noelfranthomas"
+        echo
 
-    echo "PARAMS: "
+        echo "PARAMS: "
 
-    if [[ $(setopt) == *autocd* ]]; then
-        echo "\tautocd: \e[32menabled\e[0m"
-    else
-        echo "\tautocd: \e[31mdisabled\e[0m"
+        if [[ $(setopt) == *autocd* ]]; then
+            echo "\tautocd: \e[32menabled\e[0m"
+        else
+            echo "\tautocd: \e[31mdisabled\e[0m"
+        fi
+
+        if [[ $(setopt) == *correct* ]]; then
+            echo "\tspellcheck: \e[32menabled\e[0m"
+        else
+            echo "\tspellcheck: \e[31mdisabled\e[0m"
+        fi
+
+        if [[ $CLICOLOR == 1 ]]; then
+            echo "\tCLICOLOR: \e[32menabled\e[0m"
+        else
+            echo "\tCLICOLOR: \e[31mdisabled\e[0m"
+        fi
+
+        echo "\tEDITOR: \e[32m$EDITOR\e[0m"
+
+        if [[ $LLM_AVAILABLE == 1 ]]; then
+            echo "\tLLM_AVAILABLE: \e[32menabled\e[0m"
+        else
+            echo "\tLLM_AVAILABLE: $LLM_AVAILABLE"
+        fi
+
+        echo
+        echo "Here is a list of functions that have been added to the config:"
+        echo
     fi
 
-    if [[ $(setopt) == *correct* ]]; then
-        echo "\tspellcheck: \e[32menabled\e[0m"
-    else
-        echo "\tspellcheck: \e[31mdisabled\e[0m"
-    fi
+    awk -v show_def="$1" '
+    BEGIN { found = 0 }  # Initialize a flag to indicate if we matched the function
 
-    if [[ $CLICOLOR == 1 ]]; then
-        echo "\tCLICOLOR: \e[32menabled\e[0m"
-    else
-        echo "\tCLICOLOR: \e[31mdisabled\e[0m"
-    fi
+    /^# Function/ {
+        desc=""; func_def=""; getline;
 
-    echo "\tEDITOR: \e[32m$EDITOR\e[0m"
+        while ($0 ~ /^# /) {
+            sub(/^# /, "", $0); desc = desc $0 " "; getline;
+        }
 
-    if [[ $LLM_AVAILABLE == 1 ]]; then
-        echo "\tLLM_AVAILABLE: \e[32menabled\e[0m"
-    else
-        echo "\tLLM_AVAILABLE: $LLM_AVAILABLE"
-    fi
+        func_name=$1;
+        sub(/\(\)$/, "", func_name);  # Remove () if present
 
-    echo
-    echo "Here is a list of functions that have been added to the config:"
-    echo
+        if (show_def == func_name) { found = 1 }  # Set found if function name matches argument
 
-    awk '
-    /^# Function/ { desc=""; getline; while ($0 ~ /^# /) { sub(/^# /, "", $0); desc = desc $0 " "; getline; }; func_name=$1; printf "%-16s - %s\n", func_name, desc}' ~/.functions
+        if (show_def == func_name) {
+            while ($0 !~ /^\}$/ && $0 !~ /^# Function/) {
+                func_def = func_def $0 "\n"; getline;
+            }
+            if ($0 ~ /^\}$/) {
+                func_def = func_def $0;  # Append the final line with the closing brace
+            }
+        }
+
+        if (show_def == "" && show_def != func_name) {
+            printf "\033[1;34m%-16s\033[0m - %s\n", func_name, desc;
+        }
+
+        if (show_def == func_name) {
+            printf "\n";
+            printf "\033[1;34m%s\033[0m - %s\n", func_name, desc;
+            printf "\n";
+            printf "\033[2m%s\033[0m\n", func_def;
+        }
+    }
+
+    END {
+        if (show_def != "" && found == 0) {
+            print "\nFunction \033[1;34m" show_def "\033[0m not found."
+        }
+    }
+    ' ~/.functions
 
     echo
 }
@@ -110,7 +160,8 @@ jkl() {
 # Function
 # git add shortcut
 ga() {
-  git add .
+  local path="${1:-.}"
+  git add "$path"
 }
 
 # Function
@@ -128,9 +179,20 @@ gp() {
 # Function
 # fetch all remote branches and create corresponding local branches
 gb() {
-  git fetch --all
+  # fetch all remote branches
+  git fetch --all --prune
+
+  # track all remote branches locally
   for branch in $(git branch -r | grep -v '\->'); do
     git branch --track "${branch##*/}" "$branch" 2>/dev/null || true
+  done
+
+  # delete local branches that no longer exist on the remote
+  for local_branch in $(git branch --format='%(refname:short)'); do
+    if ! git show-ref --verify --quiet "refs/remotes/origin/$local_branch"; then
+      echo "Deleting local branch $local_branch (no longer on remote)"
+      git branch -d "$local_branch" 2>/dev/null || git branch -D "$local_branch"
+    fi
   done
 }
 

@@ -1,7 +1,11 @@
 # ~/.zshrc
 
 export CLICOLOR=1
-export EDITOR='vim'
+if command -v zed &> /dev/null; then
+    export EDITOR='zed'
+else
+    export EDITOR='vim'
+fi
 export LLM_AVAILABLE="undefined"
 
 # change to a directory just by typing its name
