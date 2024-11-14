@@ -25,6 +25,8 @@ fi
 echo "- use 'help' for information"
 
 alias ls="ls -l"
+alias copy="pbcopy"
+alias paste="pbpaste"
 
 # get the last two directories of the current working directory
 get_last_two_dirs() {

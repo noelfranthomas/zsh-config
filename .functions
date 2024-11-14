@@ -256,3 +256,21 @@ venv() {
         fi
     fi
 }
+
+# Function
+# kubectl get <arg1>
+kg() {
+    kubectl get "$1"
+}
+
+# Function
+# kubectl logs <arg1>
+kl() {
+    kubectl logs "$1"
+}
+
+# Function
+# kubectl describe <arg1> <arg2>
+kd() {
+    kubectl describe "$1" "$2"
+}
