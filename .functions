@@ -215,20 +215,27 @@ mkcd() {
 # start an ubuntu container in interactive mode
 ubuntud() {
   if [ -n "$1" ]; then
-    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /app -it --rm -v "$1":/app ubuntu:noble sh -c '
-      echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /app -it --rm \
+    -e INSIDE_CONTAINER=true \
+    -v "$HOME/.zshrc":/root/.zshrc \
+    -v "$HOME/.functions":/root/.functions \
+    -v "$1":/app \
+    ubuntu:noble sh -c '
+      echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
+      apt update && apt install -y zsh software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
       curl -fsSL https://pkgx.sh | sh
-      eval "$(pkgx integrate)"
-      bash
+      zsh
     '
   else
-    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /root -it --rm ubuntu:noble sh -c '
-      echo "Starting your development container with Fish shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /root -it --rm \
+    -e INSIDE_CONTAINER=true \
+    -v "$HOME/.zshrc":/root/.zshrc \
+    -v "$HOME/.functions":/root/.functions \
+    ubuntu:noble sh -c '
+      echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
+      apt update && apt install -y zsh software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
       curl -fsSL https://pkgx.sh | sh
-      eval "$(pkgx integrate)"
-      bash
+      zsh
     '
   fi
 }
