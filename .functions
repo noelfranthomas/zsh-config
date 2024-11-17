@@ -2,6 +2,7 @@
 
 export SPECIAL_GP=~/Documents/GitHub
 export SPECIAL_ZSH_CONFIG_PATH=~/Documents/GitHub/zsh-config
+export SPECIAL_CONTACT_NUMBER_OR_EMAIL="5877009968"
 
 # Function
 # updates .zshrc, .functions, and .llm-functions. Please read .functions file for proper usage.
@@ -222,7 +223,7 @@ ubuntud() {
     -v "$1":/app \
     ubuntu:noble sh -c '
       echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y zsh software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+      apt update && apt install -y zsh software-properties-common python3.12-venv git libssl-dev curl neovim ripgrep build-essential ca-certificates libstdc++6
       curl -fsSL https://pkgx.sh | sh
       zsh
     '
@@ -233,7 +234,7 @@ ubuntud() {
     -v "$HOME/.functions":/root/.functions \
     ubuntu:noble sh -c '
       echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y zsh software-properties-common git curl fish neovim ripgrep build-essential ca-certificates libstdc++6
+      apt update && apt install -y zsh software-properties-common python3.12-venv git libssl-dev curl neovim ripgrep build-essential ca-certificates libstdc++6
       curl -fsSL https://pkgx.sh | sh
       zsh
     '
@@ -280,4 +281,39 @@ kl() {
 # kubectl describe <arg1> <arg2>
 kd() {
     kubectl describe "$1" "$2"
+}
+
+_send_message() {
+  local recipient=$SPECIAL_CONTACT_NUMBER_OR_EMAIL
+  local message="$1"
+
+  # Use AppleScript to send an iMessage
+  osascript <<EOF
+tell application "Messages"
+    set recipient to "$recipient"
+    set targetService to 1st service whose service type = iMessage
+    set targetBuddy to buddy recipient of targetService
+    if targetBuddy is not missing value then
+        send "$message" to targetBuddy
+    else
+        error "Recipient not found or not available for iMessage."
+    end if
+end tell
+EOF
+}
+
+# Function
+# send an imessage of some results; usage: notify <command>
+notify() {
+  local command_output
+  command_output=$("$@" 2>&1)  # Capture both stdout and stderr
+  local exit_code=$?
+
+  if [ $exit_code -ne 0 ]; then
+    # failure
+    _send_message "'$*' - FAILURE \n---:\n$command_output"
+  else
+    # success
+    _send_message "'$*' - SUCCESS\n---\n$command_output"
+  fi
 }
