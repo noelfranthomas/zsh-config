@@ -41,7 +41,7 @@ EOF
 )
 
   # Execute the API call
-  response=$(curl -s http://localhost:8080/v1/chat/completions \
+  response=$(curl -s http://localhost:8090/v1/chat/completions \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer no-key" \
     -d "$data" | python3 -c '

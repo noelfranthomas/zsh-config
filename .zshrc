@@ -11,7 +11,7 @@ export LLM_AVAILABLE="undefined"
 # change to a directory just by typing its name
 setopt autocd
 # spellcheck
-setopt correct
+# setopt correct
 
 # describe the commit for the zsh config
 if [ -d ~/Documents/GitHub/zsh-config ]; then
@@ -52,10 +52,10 @@ if [ -f ~/.functions ]; then
   . ~/.functions
 fi
 
-# Check if a process is running on port 8080 and source LLM functions if true
+# Check if a process is running on port 8090 and source LLM functions if true
 # Does not check if the server is healthy
 # NOTE: precmd needs to be set in every case! ***** (Should be fixed)
-if lsof -i :8080 > /dev/null 2>&1; then
+if lsof -i :8090 > /dev/null 2>&1; then
   if [ -f ~/.llm-functions ]; then
     export LLM_AVAILABLE=1
     . ~/.llm-functions
@@ -67,7 +67,7 @@ if lsof -i :8080 > /dev/null 2>&1; then
     }
   fi
 else
-  export LLM_AVAILABLE="\e[33mWARN:\e[0m LLM server not found at port 8080."
+  export LLM_AVAILABLE="\e[33mWARN:\e[0m LLM server not found at port 8090."
   # Update PS1 dynamically before each prompt
   precmd() {
       venv_name=$(get_venv_name)
@@ -80,4 +80,4 @@ else
   }
 fi
 
-source <(pkgx --shellcode)  #docs.pkgx.sh/shellcode
+source <(pkgx --shellcode)  # docs.pkgx.sh/shellcode
