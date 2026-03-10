@@ -1,8 +1,9 @@
 # ~/.functions
 
-export SPECIAL_GP=~/Documents/GitHub/grouplabs
+export SPECIAL_GP=~/Documents/GitHub
 export SPECIAL_ZSH_CONFIG_PATH=~/Documents/GitHub/zsh-config
 export SPECIAL_CONTACT_NUMBER_OR_EMAIL="5877009968"
+export SPECIAL_LLM_URL="http://localhost:9191"
 
 # Function
 # updates .zshrc, .functions, and .llm-functions. Please read .functions file for proper usage.
@@ -297,6 +298,31 @@ kl() {
 # kubectl describe <arg1> <arg2>
 kd() {
     kubectl describe "$1" "$2"
+}
+
+# Function
+# copy current directory path to clipboard
+cpwd() {
+  pwd | pbcopy
+}
+
+# Function
+# open keifu git log viewer
+gl() {
+  keifu
+}
+
+# Function
+# list all listening ports
+ports() {
+  lsof -i -P -n | grep LISTEN
+}
+
+# Function
+# show public IP address
+ip() {
+  curl -s ifconfig.me
+  echo
 }
 
 _send_message() {
