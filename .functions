@@ -1,6 +1,6 @@
 # ~/.functions
 
-export SPECIAL_GP=~/Documents/GitHub
+export SPECIAL_GP=~/Documents/GitHub/grouplabs
 export SPECIAL_ZSH_CONFIG_PATH=~/Documents/GitHub/zsh-config
 export SPECIAL_CONTACT_NUMBER_OR_EMAIL="5877009968"
 
@@ -215,30 +215,46 @@ mkcd() {
 # Function
 # start an ubuntu container in interactive mode
 ubuntud() {
+  local workdir="/root"
+
+  # Start with an empty array for volume-mount arguments
+  local -a volume_mount=()
+
   if [ -n "$1" ]; then
-    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /app -it --rm \
-    -e INSIDE_CONTAINER=true \
-    -v "$HOME/.zshrc":/root/.zshrc \
-    -v "$HOME/.functions":/root/.functions \
-    -v "$1":/app \
-    ubuntu:noble sh -c '
-      echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y zsh software-properties-common python3.12-venv git libssl-dev curl neovim ripgrep build-essential ca-certificates libstdc++6
-      curl -fsSL https://pkgx.sh | sh
-      zsh
-    '
-  else
-    docker run -e TZ=America/Denver -e DEBIAN_FRONTEND=noninteractive -w /root -it --rm \
-    -e INSIDE_CONTAINER=true \
-    -v "$HOME/.zshrc":/root/.zshrc \
-    -v "$HOME/.functions":/root/.functions \
-    ubuntu:noble sh -c '
-      echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
-      apt update && apt install -y zsh software-properties-common python3.12-venv git libssl-dev curl neovim ripgrep build-essential ca-certificates libstdc++6
-      curl -fsSL https://pkgx.sh | sh
-      zsh
-    '
+    local abs_path
+    abs_path="$(cd "$1" && pwd)"  # absolute path
+    workdir="/app"
+    # Put '-v' and 'abs_path:/app' as separate array elements
+    volume_mount=(-v "$abs_path:/app")
   fi
+
+  # Now call docker using the array expansion: "${volume_mount[@]}"
+  docker run \
+    --tmpfs /var/cache/apt:size=1g \
+    -e TZ=America/Denver \
+    -e DEBIAN_FRONTEND=noninteractive \
+    -w "$workdir" \
+    -it --rm \
+    -e INSIDE_CONTAINER=true \
+    -v "$HOME/.zshrc:/root/.zshrc" \
+    -v "$HOME/.functions:/root/.functions" \
+    "${volume_mount[@]}" \
+    ubuntu:noble \
+    bash -c "$(cat <<'EOF'
+      set -e
+      echo "Starting your development container with zsh shell and pkgx on Ubuntu Noble..."
+
+      apt update && apt install --no-install-recommends -y \
+        zsh software-properties-common python3.12-venv git libssl-dev curl \
+        neovim ripgrep build-essential ca-certificates libstdc++6
+
+      ln -sf /usr/bin/python3 /usr/bin/python
+
+      curl -fsSL https://pkgx.sh | sh
+
+      exec zsh
+EOF
+    )"
 }
 
 # Function
