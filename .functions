@@ -5,28 +5,33 @@ export SPECIAL_ZSH_CONFIG_PATH=~/Documents/GitHub/zsh-config
 export SPECIAL_CONTACT_NUMBER_OR_EMAIL="5877009968"
 export SPECIAL_LLM_URL="http://localhost:9191"
 
-# Function
-# updates .zshrc, .functions, and .llm-functions. Please read .functions file for proper usage.
+# --- Function registry ---
+typeset -gA _fn_desc    # name -> description
+typeset -gA _fn_usage   # name -> usage (optional)
+
+# Register a function: _reg <name> <description> [usage]
+_reg() {
+  _fn_desc[$1]="$2"
+  [[ -n "$3" ]] && _fn_usage[$1]="$3"
+}
+
 uzsh() {
   cp -f $SPECIAL_GP/zsh-config/.zshrc $HOME
   cp -f $SPECIAL_GP/zsh-config/.functions $HOME
   cp -f $SPECIAL_GP/zsh-config/.llm-functions $HOME
 }
+_reg uzsh "updates .zshrc, .functions, and .llm-functions"
 
-# Function
-# open the zsh-config files in the default editor.
 wzsh() {
   "$EDITOR" $SPECIAL_ZSH_CONFIG_PATH
 }
+_reg wzsh "open the zsh-config files in the default editor"
 
-# Function
-# check if a website is up
 checksite() {
   curl -Is "$1" | head -n 1
 }
+_reg checksite "check if a website is up" "checksite <url>"
 
-# Function
-# find process name and PID by port
 portpid() {
   if [ -z "$1" ]; then
     echo "Usage: portpid <port>"
@@ -35,9 +40,8 @@ portpid() {
 
   lsof -i :"$1" | awk 'NR>1 {print "Process Name: "$1, "PID: "$2}'
 }
+_reg portpid "find process name and PID by port" "portpid <port>"
 
-# Function
-# generate a random password
 genpass() {
   length="${1:-16}"
   if ! [[ "$length" =~ ^[0-9]+$ ]]; then
@@ -46,104 +50,78 @@ genpass() {
   fi
   LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c "$length" ; echo ''
 }
+_reg genpass "generate a random password" "genpass [length]"
 
-# Function
-# list all functions and descriptions, and optional definition
 help() {
-    if [[ -z "$1" ]]; then
-        # Show the intro information if no argument is provided
-        echo
-        echo "This is a zsh config designed to reduce friction during everyday use."
-        echo "Author: @noelfranthomas"
-        echo
+  if [[ -z "$1" ]]; then
+    echo
+    echo "This is a zsh config designed to reduce friction during everyday use."
+    echo "Author: @noelfranthomas"
+    echo
 
-        echo "PARAMS: "
+    echo "PARAMS: "
 
-        if [[ $(setopt) == *autocd* ]]; then
-            echo "\tautocd: \e[32menabled\e[0m"
-        else
-            echo "\tautocd: \e[31mdisabled\e[0m"
-        fi
-
-        if [[ $(setopt) == *correct* ]]; then
-            echo "\tspellcheck: \e[32menabled\e[0m"
-        else
-            echo "\tspellcheck: \e[31mdisabled\e[0m"
-        fi
-
-        if [[ $CLICOLOR == 1 ]]; then
-            echo "\tCLICOLOR: \e[32menabled\e[0m"
-        else
-            echo "\tCLICOLOR: \e[31mdisabled\e[0m"
-        fi
-
-        echo "\tEDITOR: \e[32m$EDITOR\e[0m"
-
-        if [[ $LLM_AVAILABLE == 1 ]]; then
-            echo "\tLLM_AVAILABLE: \e[32menabled\e[0m"
-        else
-            echo "\tLLM_AVAILABLE: $LLM_AVAILABLE"
-        fi
-
-        echo
-        echo "Here is a list of functions that have been added to the config:"
-        echo
+    if [[ $(setopt) == *autocd* ]]; then
+      echo "\tautocd: \e[32menabled\e[0m"
+    else
+      echo "\tautocd: \e[31mdisabled\e[0m"
     fi
 
-    awk -v show_def="$1" '
-    BEGIN { found = 0 }  # Initialize a flag to indicate if we matched the function
+    if [[ $(setopt) == *correct* ]]; then
+      echo "\tspellcheck: \e[32menabled\e[0m"
+    else
+      echo "\tspellcheck: \e[31mdisabled\e[0m"
+    fi
 
-    /^# Function/ {
-        desc=""; func_def=""; getline;
+    if [[ $CLICOLOR == 1 ]]; then
+      echo "\tCLICOLOR: \e[32menabled\e[0m"
+    else
+      echo "\tCLICOLOR: \e[31mdisabled\e[0m"
+    fi
 
-        while ($0 ~ /^# /) {
-            sub(/^# /, "", $0); desc = desc $0 " "; getline;
-        }
+    echo "\tEDITOR: \e[32m$EDITOR\e[0m"
 
-        func_name=$1;
-        sub(/\(\)$/, "", func_name);  # Remove () if present
-
-        if (show_def == func_name) { found = 1 }  # Set found if function name matches argument
-
-        if (show_def == func_name) {
-            while ($0 !~ /^\}$/ && $0 !~ /^# Function/) {
-                func_def = func_def $0 "\n"; getline;
-            }
-            if ($0 ~ /^\}$/) {
-                func_def = func_def $0;  # Append the final line with the closing brace
-            }
-        }
-
-        if (show_def == "" && show_def != func_name) {
-            printf "\033[1;34m%-16s\033[0m - %s\n", func_name, desc;
-        }
-
-        if (show_def == func_name) {
-            printf "\n";
-            printf "\033[1;34m%s\033[0m - %s\n", func_name, desc;
-            printf "\n";
-            printf "\033[2m%s\033[0m\n", func_def;
-        }
-    }
-
-    END {
-        if (show_def != "" && found == 0) {
-            print "\nFunction \033[1;34m" show_def "\033[0m not found."
-        }
-    }
-    ' ~/.functions
+    if [[ $LLM_AVAILABLE == 1 ]]; then
+      echo "\tLLM_AVAILABLE: \e[32menabled\e[0m"
+    else
+      echo "\tLLM_AVAILABLE: $LLM_AVAILABLE"
+    fi
 
     echo
+    echo "Here is a list of functions that have been added to the config:"
+    echo
+    for fn in ${(ko)_fn_desc}; do
+      printf "\033[1;34m%-16s\033[0m - %s\n" "$fn" "${_fn_desc[$fn]}"
+    done
+    echo
+  else
+    if [[ -n "${_fn_desc[$1]}" ]]; then
+      echo
+      printf "\033[1;34m%s\033[0m - %s\n" "$1" "${_fn_desc[$1]}"
+      [[ -n "${_fn_usage[$1]}" ]] && printf "Usage: %s\n" "${_fn_usage[$1]}"
+      echo
+      printf "\033[2m"
+      which "$1"
+      printf "\033[0m"
+    else
+      echo "\nFunction \033[1;34m$1\033[0m not found."
+    fi
+    echo
+  fi
 }
+_reg help "list all functions and descriptions" "help [function_name]"
 
-# Function
-# ls -lah
 ll() {
   ls -lah
 }
+_reg ll "ls -lah"
 
-# Function
-# go up multiple directories
+c() {
+  echo "running claude"
+  claude
+}
+_reg c "run coding agent"
+
 up() {
   local d=""
   local limit="$1"
@@ -152,34 +130,29 @@ up() {
   done
   cd "$d"
 }
+_reg up "go up multiple directories" "up <n>"
 
-# Function
-# go to the GitHub dir
 jkl() {
   cd $SPECIAL_GP
 }
+_reg jkl "go to the GitHub dir"
 
-# Function
-# git add shortcut
 ga() {
   local path="${1:-.}"
   git add "$path"
 }
+_reg ga "git add shortcut" "ga [path]"
 
-# Function
-# git status shortcut
 gs() {
   git status
 }
+_reg gs "git status shortcut"
 
-# Function
-# git pull shortcut
 gp() {
   git pull
 }
+_reg gp "git pull shortcut"
 
-# Function
-# fetch all remote branches and create corresponding local branches
 gb() {
   # fetch all remote branches
   git fetch --all --prune
@@ -197,24 +170,21 @@ gb() {
     fi
   done
 }
+_reg gb "fetch all remote branches and create corresponding local branches"
 
-# Function
-# git add, commit, and push
 gacp() {
   git add .
   git commit -m "$1"
   git push
 }
+_reg gacp "git add, commit, and push" "gacp <message>"
 
-# Function
-# make directory and switch in
 mkcd() {
   mkdir -p "$1"
   cd "$1"
 }
+_reg mkcd "make directory and switch in" "mkcd <dir>"
 
-# Function
-# start an ubuntu container in interactive mode
 ubuntud() {
   local workdir="/root"
 
@@ -257,9 +227,8 @@ ubuntud() {
 EOF
     )"
 }
+_reg ubuntud "start an ubuntu container in interactive mode" "ubuntud [path]"
 
-# Function
-# activate or create a virtual environment
 venv() {
     BLUE="\033[1;34m"
     GREEN="\033[1;32m"
@@ -281,49 +250,46 @@ venv() {
         fi
     fi
 }
+_reg venv "activate or create a virtual environment"
 
-# Function
-# kubectl get <arg1>
 kg() {
     kubectl get "$1"
 }
+_reg kg "kubectl get" "kg <resource>"
 
-# Function
-# kubectl logs <arg1>
 kl() {
     kubectl logs "$1"
 }
+_reg kl "kubectl logs" "kl <pod>"
 
-# Function
-# kubectl describe <arg1> <arg2>
 kd() {
     kubectl describe "$1" "$2"
 }
+_reg kd "kubectl describe" "kd <resource> <name>"
 
-# Function
-# copy current directory path to clipboard
 cpwd() {
-  pwd | pbcopy
+  local p
+  p=$(pwd)
+  print -rn -- "$p" | pbcopy
+  print -r -- "copied $p"
 }
+_reg cpwd "copy current directory path to clipboard"
 
-# Function
-# open keifu git log viewer
 gl() {
   keifu
 }
+_reg gl "open keifu git log viewer"
 
-# Function
-# list all listening ports
 ports() {
   lsof -i -P -n | grep LISTEN
 }
+_reg ports "list all listening ports"
 
-# Function
-# show public IP address
 ip() {
   curl -s ifconfig.me
   echo
 }
+_reg ip "show public IP address"
 
 _send_message() {
   local recipient=$SPECIAL_CONTACT_NUMBER_OR_EMAIL
@@ -344,8 +310,6 @@ end tell
 EOF
 }
 
-# Function
-# send an imessage of some results; usage: notify <command>
 notify() {
   local command_output
   command_output=$("$@" 2>&1)  # Capture both stdout and stderr
@@ -359,3 +323,4 @@ notify() {
     _send_message "'$*' - SUCCESS\n---\n$command_output"
   fi
 }
+_reg notify "send an imessage of some results" "notify <command>"
